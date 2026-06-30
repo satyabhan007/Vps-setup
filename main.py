@@ -1,16 +1,16 @@
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from typing import List, Optional
+import os
 from agents.supervisor import SovereignSupervisor
 
 app = FastAPI(title="Endurance CRM Agent API")
 
-# Initialize the Supervisor
-# In production, these would come from environment variables or a config file
+# Initialize the Supervisor from environment variables
 supervisor = SovereignSupervisor(
-    clinic_id="clinic_default", 
-    admin_group="ADMIN_WHATSAPP_GROUP_ID", 
-    dashboard_webhook="https://hooks.appsheet.com/dummy"
+    clinic_id=os.getenv("CLINIC_ID", "clinic_default"),
+    admin_group=os.getenv("ADMIN_GROUP", "ADMIN_WHATSAPP_GROUP_ID"),
+    dashboard_webhook=os.getenv("DASHBOARD_WEBHOOK", "https://hooks.appsheet.com/dummy")
 )
 
 class ChatMessage(BaseModel):
@@ -22,18 +22,19 @@ class ChatMessage(BaseModel):
 @app.post("/process")
 async def process_message(chat: ChatMessage):
     try:
-        # 1. Load patient profile from state (Simulated)
-        # In production, this would be a DB call to Postgres
-        profile = supervisor._get_state(chat.patient_phone, "profile") or chat.patient_data
-        supervisor._update_state(chat.patient_phone, "profile", profile)
-        
-        # 2. Process through the Supervisor Loop
+        # Merge any inline patient_data into persistent state first
+        if chat.patient_data:
+            existing = supervisor._get_state(chat.patient_phone)
+            merged = {**existing, "profile": {**existing.get("profile", {}), **chat.patient_data}}
+            supervisor._update_state(chat.patient_phone, merged)
+
+        # Process through the Supervisor Loop (Plan → Execute → Verify)
         result = supervisor.process_loop(
-            patient_phone=chat.patient_phone, 
-            message=chat.message, 
+            patient_phone=chat.patient_phone,
+            message=chat.message,
             chat_history=chat.chat_history
         )
-        
+
         return {
             "status": "success",
             "data": result

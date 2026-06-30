@@ -1,3 +1,4 @@
+# ── Application Dependencies ──────────────────────────────────────────────
 fastapi
 uvicorn
 pydantic
@@ -6,3 +7,9 @@ google-api-python-client
 google-auth-oauthlib
 google-auth-httplib2
 psycopg2-binary
+
+# ── Test Dependencies ─────────────────────────────────────────────────────
+pytest
+pytest-cov
+pytest-docker          # Spins up real Docker containers for integration tests
+httpx                  # Required by FastAPI TestClient (starlette)

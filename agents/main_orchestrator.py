@@ -1,6 +1,6 @@
-from triage_profiler import TriageProfiler
-from hitl_manager import HITLManager
-from executor_booking import BookingExecutor
+from agents.triage_profiler import TriageProfiler
+from agents.hitl_manager import HITLManager
+from agents.executor_booking import BookingExecutor
 
 class LoopOrchestrator:
     def __init__(self, clinic_id, admin_group, dashboard_webhook=None):

@@ -1,11 +1,11 @@
 import json
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from triage_profiler import TriageProfiler
-from hitl_manager import HITLManager
-from executor_booking import BookingExecutor
-from growth_reviews import GrowthExpert
-from kaizen_optimizer import KaizenExpert
+from agents.triage_profiler import TriageProfiler
+from agents.hitl_manager import HITLManager
+from agents.executor_booking import BookingExecutor
+from agents.growth_reviews import GrowthExpert
+from agents.kaizen_optimizer import KaizenExpert
 
 class SovereignSupervisor:
     def __init__(self, clinic_id, admin_group, dashboard_webhook=None):

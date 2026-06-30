@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Pytest / Coverage
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+
+# Environments
+.env
+.venv
+venv/
+env/
+
+# Credentials (never commit these)
+creds_*.json
+
+# Docker
+*.override.yml
