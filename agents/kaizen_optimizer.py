@@ -1,43 +1,57 @@
 import json
-import os
+import datetime
 
-class KaizenAgent:
-    def __init__(self, lakehouse_path):
-        self.lakehouse_path = lakehouse_path # MinIO path
+class KaizenExpert:
+    def __init__(self, clinic_id):
+        self.clinic_id = clinic_id
+        self.lakehouse_path = f"/data/lakehouse/{clinic_id}/"
 
-    def analyze_failures(self):
+    def log_interaction(self, patient_phone, message, ai_response, metadata):
         """
-        Scans the 'Human-Corrected' logs in the lakehouse to find 
-        patterns where the AI failed but the human fixed it.
+        Saves raw interaction to MinIO Lakehouse.
         """
-        corrected_data = []
-        # Read from MinIO/S3 bucket
-        # For demo, we simulate reading a JSONL file of corrections
-        for file in os.listdir(self.lakehouse_path):
-            if file.endswith(".jsonl"):
-                with open(os.path.join(self.lakehouse_path, file), 'r') as f:
-                    for line in f:
-                        corrected_data.append(json.loads(line))
+        log_entry = {
+            "timestamp": datetime.datetime.now().isoformat(),
+            "patient": patient_phone,
+            "user_msg": message,
+            "ai_res": ai_response,
+            "metadata": metadata
+        }
+        # In production, this uses a MinIO client to upload a JSON file
+        print(f"📝 Kaizen: Logging interaction to {self.lakehouse_path}")
+        return True
+
+    def identify_golden_dataset(self, interaction_logs):
+        """
+        Filters chats where staff corrected the AI to create a tuning set.
+        """
+        golden_set = []
+        for log in interaction_logs:
+            if log.get("staff_corrected") == True:
+                golden_set.append({
+                    "input": log["user_msg"],
+                    "wrong_ai_response": log["ai_res"],
+                    "correct_human_response": log["human_correction"]
+                })
+        return golden_set
+
+    def suggest_tuning_parameters(self, golden_set):
+        """
+        Analyzes common failures to suggest LLM system prompt updates.
+        """
+        if not golden_set:
+            return "No tuning needed yet."
         
-        return self._cluster_failures(corrected_data)
+        return f"Found {len(golden_set)} correction patterns. Suggesting update to 'Triage' prompt to handle these cases."
 
-    def _cluster_failures(self, data):
-        """
-        Groups similar failures to identify a 'Cluster' 
-        (e.g., 50 patients struggled with 'Insurance' questions).
-        """
-        clusters = {}
-        for entry in data:
-            fail_type = entry.get("failure_type", "general")
-            clusters[fail_type] = clusters.get(fail_type, 0) + 1
-        return clusters
-
-    def update_system_prompt(self, cluster_report):
-        """
-        Updates the global system prompt to prevent future occurrences 
-        of the most common failure cluster.
-        """
-        top_failure = max(cluster_report, key=cluster_report.get)
-        # Logic to append a 'Rule' to the system prompt:
-        # "Rule: When patients ask about [top_failure], always refer to the Insurance PDF."
-        return f"OPTIMIZATION: New rule added to handle {top_failure}"
+# Example usage
+if __name__ == "__main__":
+    kaizen = KaizenExpert("clinic_123")
+    kaizen.log_interaction("91-999", "Hello", "Hi there!", {"intent": "greeting"})
+    
+    logs = [
+        {"user_msg": "Price?", "ai_res": "I don't know", "staff_corrected": True, "human_correction": "The cleaning starts at 500 INR."}
+    ]
+    golden = kaizen.identify_golden_dataset(logs)
+    print(f"Golden Set size: {len(golden)}")
+    print(kaizen.suggest_tuning_parameters(golden))

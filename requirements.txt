@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pydantic
+requests
+google-api-python-client
+google-auth-oauthlib
+google-auth-httplib2
+psycopg2-binary

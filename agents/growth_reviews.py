@@ -1,26 +1,49 @@
 import random
 
-class GrowthAgent:
+class GrowthExpert:
     def __init__(self, clinic_id):
         self.clinic_id = clinic_id
 
-    def generate_review_suggestion(self, patient_name, success_metric):
+    def analyze_sentiment(self, chat_history):
         """
-        Generates a highly unique, specific review draft based on the 
-        actual successful outcome of the treatment.
+        Detects peak satisfaction markers in the conversation.
         """
-        # Templates designed to avoid "AI-sounding" generic reviews
+        text = " ".join([msg for msg in chat_history]).lower()
+        positive_markers = ["thank you", "amazing", "great", "helpful", "fixed", "perfect", "best"]
+        
+        score = sum(1 for marker in positive_markers if marker in text)
+        return "POSITIVE" if score >= 2 else "NEUTRAL"
+
+    def generate_review_draft(self, patient_name, treatment, sentiment):
+        """
+        Creates a personalized, SEO-friendly review draft.
+        """
+        if sentiment != "POSITIVE":
+            return None
+
         templates = [
-            f"I'm so happy with my {success_metric}! {patient_name} did a great job, and the clinic was very professional. Highly recommend!",
-            f"Finally found a place that actually delivers. My {success_metric} results are amazing. Thanks to the team at {self.clinic_id}!",
-            f"The experience was seamless. The focus on {success_metric} was exactly what I needed. 5 stars!"
+            f"I had an amazing experience at the clinic for my {treatment}! Dr. was very professional. Highly recommend!",
+            f"Best dental care in town. The {treatment} process was seamless and painless. Thank you!",
+            f"Very happy with the results of my {treatment}. The staff is incredibly friendly and the clinic is spotless."
         ]
         return random.choice(templates)
 
-    def trigger_review_request(self, patient_phone, review_draft):
+    def calculate_roi(self, empty_slots_filled, no_show_reduction_rate):
         """
-        Sends the personalized review request via WhatsApp.
+        Calculates the hard ROI for the clinic owner.
         """
-        message = f"Hi! We're so glad you're happy with your {review_draft}. Would you mind sharing this on Google? It helps others find us! [Google Review Link]"
-        # Call WhatsApp API to send
-        return message
+        avg_visit_value = 2000 # INR
+        revenue_gain = empty_slots_filled * avg_visit_value
+        return {
+            "revenue_gain": revenue_gain,
+            "no_show_improvement": f"{no_show_reduction_rate}%",
+            "status": "HIGH_ROI"
+        }
+
+# Example usage
+if __name__ == "__main__":
+    growth = GrowthExpert("clinic_123")
+    history = ["Thank you so much for the help", "The treatment was amazing"]
+    sentiment = growth.analyze_sentiment(history)
+    print(f"Sentiment: {sentiment}")
+    print(f"Draft: {growth.generate_review_draft('John', 'Root Canal', sentiment)}")
